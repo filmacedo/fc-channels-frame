@@ -1,10 +1,5 @@
 import { Button } from "frames.js/next";
 import { frames } from "./frames";
-import {
-  getTalentProtocolUser,
-  getCredentialsForPassport,
-  PassportCredentials,
-} from "@/lib/talent-protocol";
 
 // React component for the image in the home fram, shown by default
 const HomeImage = () => {
@@ -15,7 +10,7 @@ const HomeImage = () => {
         flexDirection: "column",
       }}
     >
-      @macedo's first frame!
+      @macedo's frame for ETHRome
     </div>
   );
 };
@@ -23,7 +18,7 @@ const HomeImage = () => {
 // Function for the buttons in the home fram, shown by default
 const homeButtons = () => {
   return [
-    <Button action="post" target={"/approved"}>
+    <Button action="post" target={"/validate"}>
       Join /ubi
     </Button>,
     <Button

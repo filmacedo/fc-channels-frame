@@ -6,12 +6,17 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Frames Next.js Example",
     other: {
       ...(await fetchMetadata(
-        new URL("/frames", process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+        new URL(
+          "/frames",
+          process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : "http://localhost:3000"
+        )
       )),
     },
   };
 }
 
 export default async function Home() {
-  return <div>GM user data example.</div>;
+  return <div>@macedo's frame for ETHRome</div>;
 }
