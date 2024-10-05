@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Frames Next.js Example",
+    title: "macedo @ ETHRome 2024",
     other: {
       ...(await fetchMetadata(
         new URL(
@@ -18,5 +18,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  return <div>@macedo's frame for ETHRome</div>;
+  return <div>macedo @ ETHRome 2024</div>;
 }

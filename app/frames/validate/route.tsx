@@ -9,13 +9,13 @@ import {
 // function to validate if the user is approved as member; returns a boolean for wallet, passporthuman checkmark, basename and a score for builder score
 const validateUser = async ({ message }: { message: any }) => {
   const wallet = message.requesterVerifiedAddresses?.[0] ?? "";
+  const followingCaster = message?.requesterFollowsCaster ?? false;
+  const likesCast = message?.likedCast ?? false;
   let passport = null;
   let credentials: PassportCredentials["passport_credentials"] = [];
   let builderScore = 0;
   let isHuman = false;
   let basename = "N/A";
-
-  console.log("User Address (validateUser): ", wallet);
 
   if (wallet) {
     passport = await getTalentProtocolUser(wallet);
@@ -29,45 +29,55 @@ const validateUser = async ({ message }: { message: any }) => {
         credentials.find((credential) => credential.name === "Basename")
           ?.value ?? "N/A";
       return {
-        isHuman,
-        basename,
-        builderScore,
         hasWallet: true,
         hasPassport: true,
+        builderScore,
+        isHuman,
+        basename,
+        followingCaster,
+        likesCast,
       };
     } else {
       return {
         // Early return if no passport is found
-        isHuman,
-        basename,
-        builderScore,
         hasWallet: true,
         hasPassport: false,
+        builderScore,
+        isHuman,
+        basename,
+        followingCaster,
+        likesCast,
       };
     }
   } else {
     return {
       // Early return if no wallet address is found
-      isHuman,
-      basename,
-      builderScore,
       hasWallet: false,
       hasPassport: false,
+      builderScore,
+      isHuman,
+      basename,
+      followingCaster,
+      likesCast,
     };
   }
 };
 
 // Function for the image when the user is approved
-const approvedImage = async ({
+const approvedImage = ({
   message,
   isHuman,
   basename,
   score,
+  followingCaster,
+  likesCast,
 }: {
   message: any;
   isHuman: boolean;
   basename: string;
   score: number;
+  followingCaster: boolean;
+  likesCast: boolean;
 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -76,6 +86,10 @@ const approvedImage = async ({
       <div tw="flex">Human Checkmark: {isHuman ? "Yes" : "No"}</div>
       <div tw="flex">Basename: {basename || "N/A"}</div>
       <div tw="flex">Builder Score: {score ?? "N/A"}</div>
+      <div tw="flex">
+        Following the caster: {followingCaster ? "Yes" : "No"}
+      </div>
+      <div tw="flex">Likes the cast: {likesCast ? "Yes" : "No"}</div>
       <div tw="flex">Approved!</div>
     </div>
   );
@@ -97,16 +111,20 @@ const approvedButtons = () => {
 };
 
 // Function for the image when the user is NOT approved
-const notApprovedImage = async ({
+const notApprovedImage = ({
   message,
   isHuman,
   basename,
   score,
+  followingCaster,
+  likesCast,
 }: {
   message: any;
   isHuman: boolean;
   basename: string | undefined;
   score: number | undefined;
+  followingCaster: boolean;
+  likesCast: boolean;
 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -115,6 +133,10 @@ const notApprovedImage = async ({
       <div tw="flex">Human Checkmark: {isHuman ? "Yes" : "No"}</div>
       <div tw="flex">Basename: {basename || "N/A"}</div>
       <div tw="flex">Builder Score: {score ?? "N/A"}</div>
+      <div tw="flex">
+        Following the caster: {followingCaster ? "Yes" : "No"}
+      </div>
+      <div tw="flex">Likes the cast: {likesCast ? "Yes" : "No"}</div>
       <div tw="flex">Not Approved!</div>
     </div>
   );
@@ -126,24 +148,44 @@ const notApprovedButtons = () => {
     <Button action="post" target={"/"}>
       Back
     </Button>,
-    <Button action="link" target={"https://talentprotocol.com"}>
-      Create Talent Passport
+    <Button action="post" target={"/validate"}>
+      Check again
+    </Button>,
+    <Button action="link" target={"https://passport.talentprotocol.com/"}>
+      Builder Score
+    </Button>,
+    <Button
+      action="link"
+      target={
+        "https://docs.talentprotocol.com/docs/talent-passport/human-checkmark"
+      }
+    >
+      Human Checkmark
     </Button>,
   ];
 };
 
 const handleRequest = frames(async (ctx) => {
-  const { isHuman, basename, builderScore, hasWallet, hasPassport } =
-    await validateUser({ message: ctx.message });
+  const builder = await validateUser({ message: ctx.message });
 
   // return approved image if the user is human AND has a basename credential
-  if (hasWallet && hasPassport && isHuman && basename && builderScore >= 20) {
+  if (
+    builder.hasWallet &&
+    builder.hasPassport &&
+    builder.isHuman &&
+    builder.basename &&
+    builder.followingCaster &&
+    builder.likesCast &&
+    builder.builderScore >= 50
+  ) {
     return {
       image: await approvedImage({
         message: ctx.message,
-        isHuman: isHuman,
-        basename: basename,
-        score: builderScore,
+        isHuman: builder.isHuman,
+        basename: builder.basename,
+        score: builder.builderScore,
+        followingCaster: builder.followingCaster,
+        likesCast: builder.likesCast,
       }),
       buttons: approvedButtons(),
       imageOptions: {
@@ -157,9 +199,11 @@ const handleRequest = frames(async (ctx) => {
     return {
       image: await notApprovedImage({
         message: ctx.message,
-        isHuman: isHuman,
-        basename: basename,
-        score: builderScore,
+        isHuman: builder.isHuman,
+        basename: builder.basename,
+        score: builder.builderScore,
+        followingCaster: builder.followingCaster,
+        likesCast: builder.likesCast,
       }),
       buttons: notApprovedButtons(),
       imageOptions: {

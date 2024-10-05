@@ -10,7 +10,9 @@ const HomeImage = () => {
         flexDirection: "column",
       }}
     >
-      @macedo's frame for ETHRome
+      To be approved as a member you need:
+      <br />a Talent Passport with a Human checkmark and a Builder score &gt;
+      50, a Basename, and to follow the caster and like this cast.
     </div>
   );
 };
