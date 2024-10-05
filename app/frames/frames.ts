@@ -1,31 +1,17 @@
 import { farcasterHubContext } from "frames.js/middleware";
 import { createFrames } from "frames.js/next";
-/* import { PassportResult } from "@/lib/talent-protocol";
 
-export type Builder = {
-  wallet: string;
-  passport: PassportResult;
-  builderScore: number;
-  isHuman: boolean;
-  basename: string;
-}; */
+// is the user approved to be a member or not
+export type State = {
+  isApproved: boolean;
+  isFollower: boolean;
+};
 
-export const frames = createFrames({
-  /*initialState: {
-    wallet: "",
-    passport: {
-      score: 0,
-      passport_id: 0,
-      human_checkmark: false,
-      user: null,
-      passport_profile: null,
-      passport_socials: [],
-      verified_wallets: [],
-    },
-    builderScore: 0,
-    isHuman: false,
-    basename: "",
-  },*/
+export const frames = createFrames<State>({
+  initialState: {
+    isApproved: false,
+    isFollower: false,
+  },
   basePath: "/frames",
   middleware: [
     farcasterHubContext({

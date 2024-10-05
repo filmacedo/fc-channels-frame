@@ -1,8 +1,8 @@
 import { Button } from "frames.js/next";
 import { frames } from "./frames";
-
-// React component for the image in the home fram, shown by default
-const HomeImage = () => {
+import { isUserInChannel } from "../services/channel-member";
+// React component for the initial frame image, shown by default
+const initialImage = (channel: string) => {
   return (
     <div
       style={{
@@ -10,18 +10,19 @@ const HomeImage = () => {
         flexDirection: "column",
       }}
     >
-      To be approved as a member you need:
-      <br />a Talent Passport with a Human checkmark and a Builder score &gt;
-      50, a Basename, and to follow the caster and like this cast.
+      welcome to /{channel}
     </div>
   );
 };
 
 // Function for the buttons in the home fram, shown by default
-const homeButtons = () => {
+const initialButtons = () => {
   return [
-    <Button action="post" target={"/validate"}>
-      Join /ubi
+    <Button
+      action="post"
+      target={{ query: { page: "join" }, pathname: "/validate" }}
+    >
+      Join /channel
     </Button>,
     <Button
       action="link"
@@ -35,11 +36,58 @@ const homeButtons = () => {
 };
 
 const handleRequest = frames(async (ctx) => {
+  const page = ctx.searchParams?.page ?? "initial";
+  let channel = "build";
+
+  if (page === "initial") {
+    return {
+      image: initialImage(channel),
+      // buttons: initialButtons(),
+      buttons: [
+        {
+          action: "post",
+          target: { query: { page: "join" } },
+          label: `Join /${channel}`,
+        },
+        {
+          action: "link",
+          target:
+            "https://talentprotocol.notion.site/How-it-works-115fc9bb53198006bb70d4418e45494f?pvs=4",
+          label: "How it works",
+        },
+      ],
+    };
+  }
   return {
-    image: <HomeImage />,
-    buttons: homeButtons(),
+    image: (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {(await isUserInChannel(ctx.message?.requesterFid ?? 0, channel))
+          ? "You are a member of the channel."
+          : "You are not a member of the channel yet."}
+      </div>
+    ),
+    buttons: [
+      (await isUserInChannel(ctx.message?.requesterFid ?? 0, channel))
+        ? {
+            action: "link",
+            target: `https://warpcast.com/~/channel/${channel}`,
+            label: `Go to /${channel}`,
+          }
+        : {
+            action: "post",
+            target: { query: { page: "join" }, pathname: "/validate" },
+            label: `Ask for an invite to /${channel}`,
+          },
+    ],
   };
 });
+
+/* const handleRequest = frames(async (ctx) => {
+  return {
+    image: <InitialImage />,
+    buttons: initialButtons(),
+  };
+}); */
 
 export const GET = handleRequest;
 export const POST = handleRequest;

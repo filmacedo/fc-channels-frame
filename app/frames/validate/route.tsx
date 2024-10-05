@@ -63,14 +63,16 @@ const validateUser = async ({ message }: { message: any }) => {
   }
 };
 
-// Function for the image when the user is approved
-const approvedImage = ({
+// Combined function for both approved and not approved cases
+const userInfoImage = ({
   message,
   isHuman,
   basename,
   score,
   followingCaster,
   likesCast,
+  isApproved,
+  isFollower,
 }: {
   message: any;
   isHuman: boolean;
@@ -78,6 +80,8 @@ const approvedImage = ({
   score: number;
   followingCaster: boolean;
   likesCast: boolean;
+  isApproved: boolean;
+  isFollower: boolean;
 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -86,11 +90,12 @@ const approvedImage = ({
       <div tw="flex">Human Checkmark: {isHuman ? "Yes" : "No"}</div>
       <div tw="flex">Basename: {basename || "N/A"}</div>
       <div tw="flex">Builder Score: {score ?? "N/A"}</div>
+      <div tw="flex">Approved: {isApproved ? "Yes" : "No"}</div>
       <div tw="flex">
         Following the caster: {followingCaster ? "Yes" : "No"}
       </div>
       <div tw="flex">Likes the cast: {likesCast ? "Yes" : "No"}</div>
-      <div tw="flex">Approved!</div>
+      <div tw="flex">Follower: {isFollower ? "Yes" : "No"}</div>
     </div>
   );
 };
@@ -103,43 +108,11 @@ const approvedButtons = () => {
     </Button>,
     <Button
       action="link"
-      target={"https://warpcast.com/~/compose?text=Test&channelKey=ubi"}
+      target={"https://warpcast.com/~/notifications/channels"}
     >
-      Start Casting
+      Accept Invite
     </Button>,
   ];
-};
-
-// Function for the image when the user is NOT approved
-const notApprovedImage = ({
-  message,
-  isHuman,
-  basename,
-  score,
-  followingCaster,
-  likesCast,
-}: {
-  message: any;
-  isHuman: boolean;
-  basename: string | undefined;
-  score: number | undefined;
-  followingCaster: boolean;
-  likesCast: boolean;
-}) => {
-  return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <div tw="flex">Name: {message?.requesterUserData?.displayName}</div>
-      <div tw="flex">FID: {message?.requesterFid}</div>
-      <div tw="flex">Human Checkmark: {isHuman ? "Yes" : "No"}</div>
-      <div tw="flex">Basename: {basename || "N/A"}</div>
-      <div tw="flex">Builder Score: {score ?? "N/A"}</div>
-      <div tw="flex">
-        Following the caster: {followingCaster ? "Yes" : "No"}
-      </div>
-      <div tw="flex">Likes the cast: {likesCast ? "Yes" : "No"}</div>
-      <div tw="flex">Not Approved!</div>
-    </div>
-  );
 };
 
 // Function for the buttons when the user is NOT approved
@@ -168,52 +141,46 @@ const notApprovedButtons = () => {
 const handleRequest = frames(async (ctx) => {
   const builder = await validateUser({ message: ctx.message });
 
-  // return approved image if the user is human AND has a basename credential
-  if (
-    builder.hasWallet &&
-    builder.hasPassport &&
-    builder.isHuman &&
-    builder.basename &&
-    builder.followingCaster &&
-    builder.likesCast &&
-    builder.builderScore >= 50
-  ) {
-    return {
-      image: await approvedImage({
-        message: ctx.message,
-        isHuman: builder.isHuman,
-        basename: builder.basename,
-        score: builder.builderScore,
-        followingCaster: builder.followingCaster,
-        likesCast: builder.likesCast,
-      }),
-      buttons: approvedButtons(),
-      imageOptions: {
-        dynamic: true,
-        headers: {
-          "Cache-Control": "max-age=10",
-        },
+  // Update the state
+  const updatedState = {
+    isApproved:
+      builder.hasWallet &&
+      builder.hasPassport &&
+      builder.isHuman &&
+      builder.basename !== "N/A" &&
+      builder.builderScore >= 50,
+    isFollower: builder.followingCaster && builder.likesCast,
+  };
+
+  // Use the combined userInfoImage function
+  const imageFunction = userInfoImage;
+
+  // Determine which buttons to use based on the updated state
+  const buttonsFunction =
+    updatedState.isApproved && updatedState.isFollower
+      ? approvedButtons
+      : notApprovedButtons;
+
+  return {
+    image: await imageFunction({
+      message: ctx.message,
+      isHuman: builder.isHuman,
+      basename: builder.basename,
+      score: builder.builderScore,
+      followingCaster: builder.followingCaster,
+      likesCast: builder.likesCast,
+      isApproved: updatedState.isApproved,
+      isFollower: updatedState.isFollower,
+    }),
+    buttons: buttonsFunction(),
+    state: updatedState,
+    imageOptions: {
+      dynamic: true,
+      headers: {
+        "Cache-Control": "max-age=10",
       },
-    };
-  } else {
-    return {
-      image: await notApprovedImage({
-        message: ctx.message,
-        isHuman: builder.isHuman,
-        basename: builder.basename,
-        score: builder.builderScore,
-        followingCaster: builder.followingCaster,
-        likesCast: builder.likesCast,
-      }),
-      buttons: notApprovedButtons(),
-      imageOptions: {
-        dynamic: true,
-        headers: {
-          "Cache-Control": "max-age=10",
-        },
-      },
-    };
-  }
+    },
+  };
 });
 
 export const GET = handleRequest;
