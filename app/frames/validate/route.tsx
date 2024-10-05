@@ -1,5 +1,6 @@
 import { Button } from "frames.js/next";
 import { frames } from "../frames";
+import { inviteUserToChannel } from "../../services/channel-member";
 import {
   getTalentProtocolUser,
   getCredentialsForPassport,
@@ -23,7 +24,6 @@ const validateUser = async ({ message }: { message: any }) => {
     if (passport) {
       credentials = await getCredentialsForPassport(passport.passport_id);
       isHuman = passport.human_checkmark ?? false;
-      console.log("Is Human: ", isHuman);
       builderScore = passport.score ?? 0;
       basename =
         credentials.find((credential) => credential.name === "Basename")
@@ -150,7 +150,17 @@ const handleRequest = frames(async (ctx) => {
       builder.basename !== "N/A" &&
       builder.builderScore >= 50,
     isFollower: builder.followingCaster && builder.likesCast,
+    channelId: ctx.state.channelId,
   };
+
+  // Send invite to the approved signer
+  if (updatedState.isApproved && updatedState.isFollower) {
+    await inviteUserToChannel(
+      updatedState.channelId,
+      ctx.message?.requesterFid ?? 0,
+      "member"
+    );
+  }
 
   // Use the combined userInfoImage function
   const imageFunction = userInfoImage;
@@ -176,6 +186,7 @@ const handleRequest = frames(async (ctx) => {
     state: updatedState,
     imageOptions: {
       dynamic: true,
+      aspectRatio: "1.91:1",
       headers: {
         "Cache-Control": "max-age=10",
       },

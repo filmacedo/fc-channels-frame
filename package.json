@@ -5,28 +5,43 @@
   "type": "module",
   "dependencies": {
     "@farcaster/hub-nodejs": "^0.12.4",
-    "frames.js": "^0.19.3",
+    "@neynar/nodejs-sdk": "^1.58.0",
+    "@noble/curves": "^1.6.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "frames.js": "0.19.3",
     "next": "^14.1.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.5.3",
+    "viem": "^2.21.18"
   },
   "devDependencies": {
     "@frames.js/debugger": "^0.3.14",
-    "@types/node": "^18.17.0",
+    "@types/node": "^18.19.54",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
     "is-port-reachable": "^4.0.0",
-    "typescript": "^5.4.5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
   },
   "scripts": {
     "dev": "node ./scripts/dev-script.js",
     "start": "next start",
     "build": "next build",
-    "lint": "next lint"
+    "lint": "next lint",
+    "get-approved-signer": "ts-node getApprovedSigner.ts"
   },
   "engines": {
     "node": ">=18.17.0"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    },
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   }
 }
